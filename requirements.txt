@@ -1,0 +1,30 @@
+# Data Analysis
+numpy
+pandas
+matplotlib
+openpyxl
+
+# Machine Learning
+scikit-learn
+
+# Data Visualization
+seaborn
+
+# Jupyter / Notebook
+jupyter
+ipykernel
+
+# AI / NLP
+tensorflow
+transformers
+
+# API / Backend
+fastapi
+uvicorn
+pydantic
+
+# HTTP Requests
+requests
+
+# Environment Variables
+python-dotenv
