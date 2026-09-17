@@ -1,21 +1,30 @@
-import json
+import csv
 import os
 
 
-FILE_NAME = "employees.json"
+FILE_NAME = "..\csv-analysis\employees.csv"
+FIELDNAMES = ["id", "name", "department", "salary"]
 
 
-# Load employees from JSON file
+# Load employees from CSV file
 def load_employees():
     if not os.path.exists(FILE_NAME):
         return []
 
-    try:
-        with open(FILE_NAME, "r") as file:
-            return json.load(file)
+    employees = []
 
-    except json.JSONDecodeError:
-        print("Error: Invalid JSON file.")
+    try:
+        with open(FILE_NAME, "r", newline="") as file:
+            reader = csv.DictReader(file)
+
+            for row in reader:
+                row["salary"] = float(row["salary"])
+                employees.append(row)
+
+        return employees
+
+    except ValueError:
+        print("Error: Invalid salary value in CSV file.")
         return []
 
     except Exception as error:
@@ -23,11 +32,14 @@ def load_employees():
         return []
 
 
-# Save employees to JSON file
+# Save employees to CSV file
 def save_employees():
     try:
-        with open(FILE_NAME, "w") as file:
-            json.dump(employees, file, indent=4)
+        with open(FILE_NAME, "w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
+
+            writer.writeheader()
+            writer.writerows(employees)
 
     except Exception as error:
         print("Error saving employees:", error)
@@ -125,7 +137,9 @@ def delete_employee():
 
 # Search employee
 def search_employee():
-    search_value = input("Enter employee ID or name to search: ").lower()
+    search_value = input(
+        "Enter employee ID or name to search: "
+    ).lower()
 
     found = False
 
@@ -228,11 +242,21 @@ def statistics():
         print("No employees found.")
         return
 
-    total_salary = sum(employee["salary"] for employee in employees)
+    total_salary = sum(
+        employee["salary"] for employee in employees
+    )
+
     average_salary = total_salary / len(employees)
 
-    highest = max(employees, key=lambda employee: employee["salary"])
-    lowest = min(employees, key=lambda employee: employee["salary"])
+    highest = max(
+        employees,
+        key=lambda employee: employee["salary"]
+    )
+
+    lowest = min(
+        employees,
+        key=lambda employee: employee["salary"]
+    )
 
     print("\n========== Statistics ==========")
     print("Total Employees:", len(employees))
@@ -248,9 +272,11 @@ def statistics():
     print("Salary:", lowest["salary"])
 
 
-# Main menu
+# Load employees when program starts
 employees = load_employees()
 
+
+# Main menu
 while True:
 
     print("\n======================================")
