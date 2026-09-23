@@ -3,6 +3,7 @@ numpy
 pandas
 matplotlib
 openpyxl
+scikit-learn
 
 # Machine Learning
 scikit-learn
