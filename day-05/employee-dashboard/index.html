@@ -1,601 +1,140 @@
-<!-- index.html -->
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Employee Dashboard</title>
-
-    <link rel="stylesheet" href="style.css">
-</head>
-
-
-<body>
-
-    <div class="page-background">
-
-        <!-- ==========================================
-             HEADER
-        =========================================== -->
-
-        <header class="header">
-
-            <div class="brand">
-
-                <div class="brand-icon">
-                    👥
-                </div>
-
-                <div>
-                    <h1>
-                        Employee
-                        <span>Dashboard</span>
-                    </h1>
-
-                    <p>
-                        Manage and search employee records
-                    </p>
-                </div>
-
-            </div>
-
-
-            <div class="date-card">
-
-                <div class="date-icon">
-                    📅
-                </div>
-
-                <div>
-                    <strong id="currentDate">
-                        Employee Management
-                    </strong>
-
-                    <span>
-                        Keep building! 🚀
-                    </span>
-                </div>
-
-            </div>
-
-        </header>
-
-
-        <!-- ==========================================
-             SEARCH / FILTER BAR
-        =========================================== -->
-
-        <section class="control-panel">
-
-            <div class="search-box">
-
-                <span>⌕</span>
-
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="Search employees by name..."
-                >
-
-            </div>
-
-
-            <div class="select-box">
-
-                <span>▦</span>
-
-                <select id="departmentFilter">
-
-                    <option value="all">
-                        All Departments
-                    </option>
-
-                    <option value="IT">
-                        IT
-                    </option>
-
-                    <option value="HR">
-                        HR
-                    </option>
-
-                    <option value="Finance">
-                        Finance
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="select-box">
-
-                <span>☷</span>
-
-                <select id="sortOption">
-
-                    <option value="">
-                        Sort By
-                    </option>
-
-                    <option value="salary-high">
-                        Salary: High to Low
-                    </option>
-
-                    <option value="salary-low">
-                        Salary: Low to High
-                    </option>
-
-                    <option value="name">
-                        Name: A to Z
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <button
-                id="addEmployeeButton"
-                class="add-button"
-            >
-                <span>＋</span>
-                Add Employee
-            </button>
-
-        </section>
-
-
-        <!-- ==========================================
-             STATISTICS
-        =========================================== -->
-
-        <section class="stats-grid">
-
-            <div class="stat-card blue">
-
-                <div class="stat-icon">
-                    👥
-                </div>
-
-                <div>
-                    <strong id="totalEmployees">
-                        0
-                    </strong>
-
-                    <span>
-                        Total Employees
-                    </span>
-                </div>
-
-            </div>
-
-
-            <div class="stat-card green">
-
-                <div class="stat-icon">
-                    💼
-                </div>
-
-                <div>
-                    <strong id="itEmployees">
-                        0
-                    </strong>
-
-                    <span>
-                        IT Department
-                    </span>
-                </div>
-
-            </div>
-
-
-            <div class="stat-card orange">
-
-                <div class="stat-icon">
-                    👤
-                </div>
-
-                <div>
-                    <strong id="hrEmployees">
-                        0
-                    </strong>
-
-                    <span>
-                        HR Department
-                    </span>
-                </div>
-
-            </div>
-
-
-            <div class="stat-card purple">
-
-                <div class="stat-icon">
-                    📊
-                </div>
-
-                <div>
-                    <strong id="financeEmployees">
-                        0
-                    </strong>
-
-                    <span>
-                        Finance Department
-                    </span>
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ==========================================
-             EMPLOYEE SECTION
-        =========================================== -->
-
-        <section class="employee-section">
-
-            <div class="section-heading">
-
-                <div class="section-title">
-
-                    <div class="section-icon">
-                        👥
-                    </div>
-
-                    <div>
-
-                        <h2>
-                            Employees
-                        </h2>
-
-                        <p>
-                            View, edit and manage employee information
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="employee-count"
-                    id="employeeCount"
-                >
-                    0 employees found
-                </div>
-
-            </div>
-
-
-            <div
-                id="employeeList"
-                class="employee-grid"
-            >
-            </div>
-
-        </section>
-
-    </div>
-
-
-    <!-- ==========================================
-         EMPLOYEE DETAILS MODAL
-    =========================================== -->
-
-    <div
-        id="employeeModal"
-        class="modal"
-    >
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <div>
-                    <h2>
-                        Employee Details
-                    </h2>
-
-                    <p>
-                        Employee information
-                    </p>
-                </div>
-
-                <button
-                    id="closeModal"
-                    class="modal-close"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <div
-                id="employeeDetails"
-                class="employee-details"
-            >
-            </div>
-
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f6f2" />
+    <title>People Directory | Day 5</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="People Directory home">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <span>People<span class="brand-light">Directory</span></span>
+      </a>
+      <span class="topbar-note">DAY 05 <span aria-hidden="true">/</span> JAVASCRIPT</span>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-heading" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">TEAM OVERVIEW</p>
+          <h1 id="page-title">Employee directory</h1>
+          <p class="subtitle">A clear view of the people behind the work.</p>
+        </div>
+        <button class="button button-primary" id="add-employee-button" type="button">
+          <span aria-hidden="true">+</span> Add employee
+        </button>
+      </section>
+
+      <p class="status-message" id="status-message" role="status" aria-live="polite"></p>
+
+      <section class="statistics" aria-label="Employee statistics">
+        <article class="statistic">
+          <span class="stat-label">TOTAL EMPLOYEES</span>
+          <strong id="total-employees">--</strong>
+          <span class="stat-footnote">In this directory</span>
+        </article>
+        <article class="statistic statistic-accent">
+          <span class="stat-label">AVERAGE SALARY</span>
+          <strong id="average-salary">--</strong>
+          <span class="stat-footnote">Across all employees</span>
+        </article>
+        <article class="statistic">
+          <span class="stat-label">DEPARTMENTS</span>
+          <strong id="department-count">--</strong>
+          <span class="stat-footnote">Teams represented</span>
+        </article>
+      </section>
+
+      <section class="directory" aria-labelledby="directory-title">
+        <div class="directory-heading">
+          <div>
+            <p class="eyebrow">PEOPLE</p>
+            <h2 id="directory-title">All employees</h2>
+          </div>
+          <span class="result-count" id="result-count">Loading...</span>
         </div>
 
-    </div>
+        <form class="filters" role="search" onsubmit="return false">
+          <label class="search-field">
+            <span class="visually-hidden">Search by name or email</span>
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="search-input" type="search" placeholder="Search name or email" autocomplete="off" />
+          </label>
+          <label class="select-field">
+            <span class="visually-hidden">Filter by department</span>
+            <select id="department-filter" aria-label="Filter by department">
+              <option value="all">All departments</option>
+            </select>
+          </label>
+          <label class="select-field sort-field">
+            <span class="visually-hidden">Sort employees</span>
+            <select id="sort-control" aria-label="Sort employees">
+              <option value="name-asc">Name: A to Z</option>
+              <option value="name-desc">Name: Z to A</option>
+              <option value="salary-asc">Salary: Low to high</option>
+              <option value="salary-desc">Salary: High to low</option>
+            </select>
+          </label>
+        </form>
 
-
-    <!-- ==========================================
-         ADD / EDIT EMPLOYEE MODAL
-    =========================================== -->
-
-    <div
-        id="formModal"
-        class="modal"
-    >
-
-        <div class="modal-content form-content">
-
-            <div class="modal-header">
-
-                <div>
-                    <h2 id="formTitle">
-                        Add Employee
-                    </h2>
-
-                    <p>
-                        Enter employee information
-                    </p>
-                </div>
-
-                <button
-                    id="closeFormModal"
-                    class="modal-close"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <form id="employeeForm">
-
-                <div class="form-group">
-
-                    <label for="employeeName">
-                        Employee Name
-                    </label>
-
-                    <input
-                        type="text"
-                        id="employeeName"
-                        placeholder="Enter employee name"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="employeeDepartment">
-                        Department
-                    </label>
-
-                    <select
-                        id="employeeDepartment"
-                        required
-                    >
-
-                        <option value="">
-                            Select Department
-                        </option>
-
-                        <option value="IT">
-                            IT
-                        </option>
-
-                        <option value="HR">
-                            HR
-                        </option>
-
-                        <option value="Finance">
-                            Finance
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="employeeSalary">
-                        Salary
-                    </label>
-
-                    <input
-                        type="number"
-                        id="employeeSalary"
-                        placeholder="Enter salary"
-                        min="0"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-actions">
-
-                    <button
-                        type="button"
-                        id="cancelForm"
-                        class="cancel-button"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="save-button"
-                    >
-                        Save Employee
-                    </button>
-
-                </div>
-
-            </form>
-
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">EMPLOYEE</th>
+                <th scope="col">DEPARTMENT</th>
+                <th scope="col">POSITION</th>
+                <th scope="col">SALARY</th>
+                <th scope="col">LOCATION</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="employee-list">
+              <tr><td class="empty-state" colspan="6">Loading employee data...</td></tr>
+            </tbody>
+          </table>
         </div>
+      </section>
+    </main>
 
-    </div>
+    <dialog class="dialog" id="details-dialog" aria-labelledby="details-title">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">EMPLOYEE PROFILE</p>
+          <h2 id="details-title">Employee details</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-details aria-label="Close details">×</button>
+      </div>
+      <dl class="details-grid" id="details-content"></dl>
+    </dialog>
 
-
-    <script>
-
-        // Current date
-
-        const dateElement =
-            document.getElementById("currentDate");
-
-        const today =
-            new Date();
-
-        dateElement.textContent =
-            today.toLocaleDateString(
-                "en-IN",
-                {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric"
-                }
-            );
-
-
-        // Cancel form button
-
-        const cancelForm =
-            document.getElementById("cancelForm");
-
-        const formModal =
-            document.getElementById("formModal");
-
-        cancelForm.addEventListener(
-            "click",
-            () => {
-
-                formModal.style.display =
-                    "none";
-
-            }
-        );
-
-
-        // Statistics
-
-        function updateStatistics() {
-
-            const total =
-                document.getElementById(
-                    "totalEmployees"
-                );
-
-            const it =
-                document.getElementById(
-                    "itEmployees"
-                );
-
-            const hr =
-                document.getElementById(
-                    "hrEmployees"
-                );
-
-            const finance =
-                document.getElementById(
-                    "financeEmployees"
-                );
-
-            const count =
-                document.getElementById(
-                    "employeeCount"
-                );
-
-
-            if (
-                typeof employees === "undefined"
-            ) {
-                return;
-            }
-
-
-            total.textContent =
-                employees.length;
-
-
-            it.textContent =
-                employees.filter(
-                    employee =>
-                        employee.department === "IT"
-                ).length;
-
-
-            hr.textContent =
-                employees.filter(
-                    employee =>
-                        employee.department === "HR"
-                ).length;
-
-
-            finance.textContent =
-                employees.filter(
-                    employee =>
-                        employee.department === "Finance"
-                ).length;
-
-
-            count.textContent =
-                `${employees.length} employee${
-                    employees.length === 1
-                        ? ""
-                        : "s"
-                } found`;
-        }
-
-
-        // Update statistics whenever employees
-        // are displayed.
-
-        const originalDisplayEmployees =
-            window.displayEmployees;
-
-
-        window.displayEmployees =
-            function(employeeData) {
-
-                if (
-                    originalDisplayEmployees
-                ) {
-
-                    originalDisplayEmployees(
-                        employeeData
-                    );
-
-                }
-
-                updateStatistics();
-
-            };
-
-    </script>
-
-
-    <script src="app.js"></script>
-
-</body>
-
+    <dialog class="dialog form-dialog" id="employee-dialog" aria-labelledby="form-title">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">DIRECTORY</p>
+          <h2 id="form-title">Add employee</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-form aria-label="Close form">×</button>
+      </div>
+      <form id="employee-form" novalidate>
+        <div class="form-grid">
+          <label>Name<input name="name" required maxlength="100" autocomplete="name" /></label>
+          <label>Email<input name="email" type="email" required maxlength="160" autocomplete="email" /></label>
+          <label>Department<input name="department" required maxlength="80" /></label>
+          <label>Position<input name="position" required maxlength="100" /></label>
+          <label>Salary<input name="salary" type="number" required min="1" step="1" inputmode="numeric" /></label>
+          <label>Location<input name="location" required maxlength="100" /></label>
+        </div>
+        <p class="form-error" id="form-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button class="button button-secondary" type="button" data-close-form>Cancel</button>
+          <button class="button button-primary" type="submit">Save employee</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
 </html>

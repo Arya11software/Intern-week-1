@@ -1,946 +1,339 @@
-// ==========================================
-// Employee Dashboard - Real REST API
-// ==========================================
+const STORAGE_KEY = "day5-employee-directory";
+const EMPLOYEES_URL = "./data/employees.json";
 
-// ==========================================
-// API URL
-// ==========================================
-
-const API_URL =
-    "http://localhost:5000/api/employees";
-
-
-// ==========================================
-// Employee Data
-// ==========================================
+const employeeList = document.querySelector("#employee-list");
+const searchInput = document.querySelector("#search-input");
+const departmentFilter = document.querySelector("#department-filter");
+const sortControl = document.querySelector("#sort-control");
+const statusMessage = document.querySelector("#status-message");
+const employeeDialog = document.querySelector("#employee-dialog");
+const employeeForm = document.querySelector("#employee-form");
+const detailsDialog = document.querySelector("#details-dialog");
+const detailsContent = document.querySelector("#details-content");
+const formError = document.querySelector("#form-error");
 
 let employees = [];
-
-
-// ==========================================
-// DOM Elements
-// ==========================================
-
-const employeeList =
-    document.getElementById("employeeList");
-
-const searchInput =
-    document.getElementById("searchInput");
-
-const departmentFilter =
-    document.getElementById("departmentFilter");
-
-const sortOption =
-    document.getElementById("sortOption");
-
-const addEmployeeButton =
-    document.getElementById("addEmployeeButton");
-
-
-// ==========================================
-// Details Modal
-// ==========================================
-
-const employeeModal =
-    document.getElementById("employeeModal");
-
-const employeeDetails =
-    document.getElementById("employeeDetails");
-
-const closeModal =
-    document.getElementById("closeModal");
-
-
-// ==========================================
-// Employee Form Modal
-// ==========================================
-
-const formModal =
-    document.getElementById("formModal");
-
-const closeFormModal =
-    document.getElementById("closeFormModal");
-
-const employeeForm =
-    document.getElementById("employeeForm");
-
-const formTitle =
-    document.getElementById("formTitle");
-
-const employeeName =
-    document.getElementById("employeeName");
-
-const employeeDepartment =
-    document.getElementById("employeeDepartment");
-
-const employeeSalary =
-    document.getElementById("employeeSalary");
-
-
-// Employee currently being edited
-
 let editingEmployeeId = null;
+let storageWarning = "";
 
-
-// ==========================================
-// GET - Fetch All Employees
-// ==========================================
-
-async function fetchEmployees() {
-
-    try {
-
-        employeeList.innerHTML =
-            "<p>Loading employees...</p>";
-
-
-        const response =
-            await fetch(API_URL);
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `HTTP Error: ${response.status}`
-            );
-        }
-
-
-        employees =
-            await response.json();
-
-
-        updateEmployees();
-
-    } catch (error) {
-
-        console.error(
-            "GET Error:",
-            error
-        );
-
-
-        employeeList.innerHTML =
-            `
-            <p>
-                Failed to load employees.
-                Make sure the backend is running.
-            </p>
-            `;
-    }
+function showMessage(message, isError = false) {
+  statusMessage.textContent = message;
+  statusMessage.classList.toggle("error", isError);
 }
 
+function formatSalary(salary) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(salary);
+}
 
-// ==========================================
-// Display Employees
-// ==========================================
+function calculateStatistics() {
+  const totalSalary = employees.reduce((total, employee) => total + employee.salary, 0);
+  const averageSalary = employees.length ? totalSalary / employees.length : 0;
+  const departmentCount = new Set(employees.map((employee) => employee.department)).size;
 
-function displayEmployees(employeeData) {
+  document.querySelector("#total-employees").textContent = employees.length;
+  document.querySelector("#average-salary").textContent = formatSalary(averageSalary);
+  document.querySelector("#department-count").textContent = departmentCount;
+}
 
-    employeeList.innerHTML = "";
+function updateDepartmentOptions() {
+  const selectedDepartment = departmentFilter.value;
+  const departments = [...new Set(employees.map((employee) => employee.department))]
+    .sort((first, second) => first.localeCompare(second));
 
+  departmentFilter.replaceChildren(new Option("All departments", "all"));
+  for (const department of departments) {
+    departmentFilter.add(new Option(department, department));
+  }
+  departmentFilter.value = departments.includes(selectedDepartment) ? selectedDepartment : "all";
+}
 
-    if (employeeData.length === 0) {
+function getVisibleEmployees() {
+  const query = searchInput.value.trim().toLowerCase();
+  const selectedDepartment = departmentFilter.value;
+  const [sortBy, direction] = sortControl.value.split("-");
 
-        employeeList.innerHTML =
-            "<p>No employees found.</p>";
-
-        return;
-    }
-
-
-    employeeData.forEach(employee => {
-
-        const card =
-            document.createElement("div");
-
-
-        card.className =
-            "employee-card";
-
-
-        card.innerHTML = `
-
-            <h3>
-                ${employee.name}
-            </h3>
-
-            <p>
-                <strong>ID:</strong>
-                ${employee.id}
-            </p>
-
-            <p>
-                <strong>Department:</strong>
-                ${employee.department}
-            </p>
-
-            <p>
-                <strong>Salary:</strong>
-                ₹${Number(employee.salary).toLocaleString("en-IN")}
-            </p>
-
-            <button
-                onclick="viewEmployee(${employee.id})"
-            >
-                Details
-            </button>
-
-            <button
-                onclick="editEmployee(${employee.id})"
-            >
-                Edit
-            </button>
-
-            <button
-                onclick="deleteEmployee(${employee.id})"
-            >
-                Delete
-            </button>
-
-        `;
-
-
-        employeeList.appendChild(card);
-
+  return employees
+    .filter((employee) => {
+      const matchesQuery = `${employee.name} ${employee.email}`.toLowerCase().includes(query);
+      const matchesDepartment = selectedDepartment === "all" || employee.department === selectedDepartment;
+      return matchesQuery && matchesDepartment;
+    })
+    .sort((first, second) => {
+      const comparison = sortBy === "salary"
+        ? first.salary - second.salary
+        : first.name.localeCompare(second.name);
+      return direction === "desc" ? -comparison : comparison;
     });
 }
 
+function createEmployeeRow(employee) {
+  const row = document.createElement("tr");
+  const identityCell = document.createElement("td");
+  const identity = document.createElement("div");
+  identity.className = "employee-cell";
 
-// ==========================================
-// Search / Filter / Sort
-// ==========================================
+  const avatar = document.createElement("span");
+  avatar.className = "avatar";
+  avatar.setAttribute("aria-hidden", "true");
+  avatar.textContent = employee.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase();
 
-function updateEmployees() {
+  const identityText = document.createElement("div");
+  const name = document.createElement("span");
+  name.className = "employee-name";
+  name.textContent = employee.name;
+  const email = document.createElement("span");
+  email.className = "employee-email";
+  email.textContent = employee.email;
+  identityText.append(name, email);
+  identity.append(avatar, identityText);
+  identityCell.append(identity);
 
-    let result =
-        [...employees];
+  const departmentCell = document.createElement("td");
+  const departmentTag = document.createElement("span");
+  departmentTag.className = "department-tag";
+  departmentTag.textContent = employee.department;
+  departmentCell.append(departmentTag);
 
+  const salaryCell = document.createElement("td");
+  salaryCell.className = "salary-cell";
+  salaryCell.textContent = formatSalary(employee.salary);
 
-    // ======================================
-    // Search
-    // ======================================
-
-    const searchText =
-        searchInput.value
-            .toLowerCase()
-            .trim();
-
-
-    if (searchText !== "") {
-
-        result =
-            result.filter(employee =>
-
-                employee.name
-                    .toLowerCase()
-                    .includes(searchText)
-
-            );
-
-    }
-
-
-    // ======================================
-    // Department Filter
-    // ======================================
-
-    const department =
-        departmentFilter.value;
-
-
-    if (department !== "all") {
-
-        result =
-            result.filter(employee =>
-
-                employee.department ===
-                department
-
-            );
-
-    }
-
-
-    // ======================================
-    // Sorting
-    // ======================================
-
-    const sort =
-        sortOption.value;
-
-
-    if (sort === "salary-high") {
-
-        result.sort(
-            (a, b) =>
-                Number(b.salary) -
-                Number(a.salary)
-        );
-
-    }
-
-
-    if (sort === "salary-low") {
-
-        result.sort(
-            (a, b) =>
-                Number(a.salary) -
-                Number(b.salary)
-        );
-
-    }
-
-
-    if (sort === "name") {
-
-        result.sort(
-            (a, b) =>
-                a.name.localeCompare(
-                    b.name
-                )
-        );
-
-    }
-
-
-    displayEmployees(result);
+  row.append(
+    identityCell,
+    departmentCell,
+    createTextCell(employee.position),
+    salaryCell,
+    createTextCell(employee.location),
+    createActionsCell(employee.id),
+  );
+  return row;
 }
 
-
-// ==========================================
-// GET - Single Employee
-// ==========================================
-
-async function viewEmployee(id) {
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/${id}`
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `HTTP Error: ${response.status}`
-            );
-        }
-
-
-        const employee =
-            await response.json();
-
-
-        employeeDetails.innerHTML = `
-
-            <div class="employee-detail">
-
-                <strong>ID:</strong>
-
-                ${employee.id}
-
-            </div>
-
-
-            <div class="employee-detail">
-
-                <strong>Name:</strong>
-
-                ${employee.name}
-
-            </div>
-
-
-            <div class="employee-detail">
-
-                <strong>Department:</strong>
-
-                ${employee.department}
-
-            </div>
-
-
-            <div class="employee-detail">
-
-                <strong>Salary:</strong>
-
-                ₹${Number(employee.salary)
-                    .toLocaleString("en-IN")}
-
-            </div>
-
-        `;
-
-
-        employeeModal.style.display =
-            "flex";
-
-    } catch (error) {
-
-        console.error(
-            "GET Employee Error:",
-            error
-        );
-
-
-        alert(
-            "Failed to load employee details."
-        );
-    }
+function createTextCell(text) {
+  const cell = document.createElement("td");
+  cell.textContent = text;
+  return cell;
 }
 
+function createActionsCell(employeeId) {
+  const cell = document.createElement("td");
+  const actions = document.createElement("div");
+  actions.className = "actions";
 
-// ==========================================
-// Open Add Employee Form
-// ==========================================
+  const actionItems = [
+    ["Details", () => showEmployeeDetails(employeeId), ""],
+    ["Edit", () => editEmployee(employeeId), ""],
+    ["Delete", () => deleteEmployee(employeeId), "delete-action"],
+  ];
+  for (const [label, action, className] of actionItems) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `text-action ${className}`.trim();
+    button.textContent = label;
+    button.addEventListener("click", action);
+    actions.append(button);
+  }
+  cell.append(actions);
+  return cell;
+}
+
+function renderEmployees() {
+  const visibleEmployees = getVisibleEmployees();
+  employeeList.replaceChildren();
+  document.querySelector("#result-count").textContent =
+    `${visibleEmployees.length} ${visibleEmployees.length === 1 ? "employee" : "employees"}`;
+
+  if (!visibleEmployees.length) {
+    const row = document.createElement("tr");
+    const message = document.createElement("td");
+    message.className = "empty-state";
+    message.colSpan = 6;
+    message.textContent = "No employees match these filters.";
+    row.append(message);
+    employeeList.append(row);
+    return;
+  }
+
+  employeeList.append(...visibleEmployees.map(createEmployeeRow));
+}
+
+function saveEmployees() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(employees));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function refreshDashboard(message) {
+  updateDepartmentOptions();
+  calculateStatistics();
+  renderEmployees();
+  if (message) showMessage(message);
+}
+
+async function loadEmployees() {
+  try {
+    const savedEmployees = localStorage.getItem(STORAGE_KEY);
+    if (savedEmployees !== null) {
+      const parsedEmployees = JSON.parse(savedEmployees);
+      if (!Array.isArray(parsedEmployees)) throw new Error("Saved employee data is not a list.");
+      employees = parsedEmployees;
+      refreshDashboard("Loaded your saved employee data from this browser.");
+      return;
+    }
+  } catch (error) {
+    storageWarning = `Saved browser data could not be read. Loading the starter data instead: ${error.message}`;
+    showMessage(storageWarning, true);
+  }
+
+  try {
+    const response = await fetch(EMPLOYEES_URL);
+    if (!response.ok) throw new Error(`Employee data request returned HTTP ${response.status}.`);
+    const loadedEmployees = await response.json();
+    if (!Array.isArray(loadedEmployees)) throw new Error("Employee data must be a JSON array.");
+    employees = loadedEmployees;
+    const wasSaved = saveEmployees();
+    const message = wasSaved
+      ? "Loaded the starter employees. Changes are saved in this browser."
+      : "Loaded the starter employees. Changes will only last for this session because browser storage is unavailable.";
+    refreshDashboard([storageWarning, message].filter(Boolean).join(" "));
+  } catch (error) {
+    employeeList.replaceChildren();
+    const row = document.createElement("tr");
+    const message = document.createElement("td");
+    message.className = "empty-state";
+    message.colSpan = 6;
+    message.textContent = "Employee data could not be loaded. Run this page from a local web server and check data/employees.json.";
+    row.append(message);
+    employeeList.append(row);
+    showMessage(`Could not load employees: ${error.message}`, true);
+  }
+}
+
+function showEmployeeDetails(employeeId) {
+  const employee = employees.find((item) => item.id === employeeId);
+  if (!employee) {
+    showMessage("That employee could not be found. The list has been refreshed.", true);
+    refreshDashboard();
+    return;
+  }
+
+  const details = [
+    ["Name", employee.name],
+    ["Email", employee.email],
+    ["Department", employee.department],
+    ["Position", employee.position],
+    ["Salary", formatSalary(employee.salary)],
+    ["Location", employee.location],
+  ];
+  detailsContent.replaceChildren(...details.map(([label, value]) => {
+    const item = document.createElement("div");
+    const term = document.createElement("dt");
+    term.textContent = label;
+    const description = document.createElement("dd");
+    description.textContent = value;
+    item.append(term, description);
+    return item;
+  }));
+  detailsDialog.showModal();
+}
 
 function openAddEmployeeForm() {
-
-    editingEmployeeId =
-        null;
-
-
-    formTitle.textContent =
-        "Add Employee";
-
-
-    employeeForm.reset();
-
-
-    formModal.style.display =
-        "flex";
+  editingEmployeeId = null;
+  employeeForm.reset();
+  formError.textContent = "";
+  document.querySelector("#form-title").textContent = "Add employee";
+  employeeDialog.showModal();
 }
 
+function editEmployee(employeeId) {
+  const employee = employees.find((item) => item.id === employeeId);
+  if (!employee) {
+    showMessage("That employee could not be found. The list has been refreshed.", true);
+    refreshDashboard();
+    return;
+  }
 
-// ==========================================
-// Open Edit Employee Form
-// ==========================================
-
-function editEmployee(id) {
-
-    const employee =
-        employees.find(
-            employee =>
-                employee.id === id
-        );
-
-
-    if (!employee) {
-
-        alert(
-            "Employee not found."
-        );
-
-        return;
-    }
-
-
-    editingEmployeeId =
-        id;
-
-
-    formTitle.textContent =
-        "Edit Employee";
-
-
-    employeeName.value =
-        employee.name;
-
-
-    employeeDepartment.value =
-        employee.department;
-
-
-    employeeSalary.value =
-        employee.salary;
-
-
-    formModal.style.display =
-        "flex";
+  editingEmployeeId = employeeId;
+  for (const field of ["name", "email", "department", "position", "salary", "location"]) {
+    employeeForm.elements[field].value = employee[field];
+  }
+  formError.textContent = "";
+  document.querySelector("#form-title").textContent = "Edit employee";
+  employeeDialog.showModal();
 }
 
-
-// ==========================================
-// POST - Create Employee
-// ==========================================
-
-async function createEmployee(employeeData) {
-
-    try {
-
-        const response =
-            await fetch(
-                API_URL,
-                {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify(
-                            employeeData
-                        )
-
-                }
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `HTTP Error: ${response.status}`
-            );
-        }
-
-
-        const createdEmployee =
-            await response.json();
-
-
-        console.log(
-            "Employee created:",
-            createdEmployee
-        );
-
-
-        return createdEmployee;
-
-    } catch (error) {
-
-        console.error(
-            "POST Error:",
-            error
-        );
-
-
-        return null;
-    }
+function validateEmployee(employee) {
+  if (Object.values(employee).some((value) => value === "")) return "Please complete every field.";
+  if (!employeeForm.elements.email.validity.valid) return "Enter a valid email address.";
+  if (!Number.isFinite(employee.salary) || employee.salary <= 0) return "Salary must be a number greater than zero.";
+  return "";
 }
 
+function saveEmployee(event) {
+  event.preventDefault();
+  const formData = new FormData(employeeForm);
+  const employee = {
+    name: formData.get("name").trim(),
+    email: formData.get("email").trim(),
+    department: formData.get("department").trim(),
+    position: formData.get("position").trim(),
+    salary: Number(formData.get("salary")),
+    location: formData.get("location").trim(),
+  };
+  const validationMessage = validateEmployee(employee);
+  if (validationMessage) {
+    formError.textContent = validationMessage;
+    return;
+  }
 
-// ==========================================
-// PUT - Update Employee
-// ==========================================
-
-async function updateEmployeeAPI(
-    id,
-    employeeData
-) {
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/${id}`,
-                {
-
-                    method: "PUT",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify(
-                            employeeData
-                        )
-
-                }
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `HTTP Error: ${response.status}`
-            );
-        }
-
-
-        const updatedEmployee =
-            await response.json();
-
-
-        console.log(
-            "Employee updated:",
-            updatedEmployee
-        );
-
-
-        return updatedEmployee;
-
-    } catch (error) {
-
-        console.error(
-            "PUT Error:",
-            error
-        );
-
-
-        return null;
+  if (editingEmployeeId === null) {
+    const nextId = employees.reduce((largestId, item) => Math.max(largestId, item.id), 0) + 1;
+    employees.push({ id: nextId, ...employee });
+  } else {
+    const employeeIndex = employees.findIndex((item) => item.id === editingEmployeeId);
+    if (employeeIndex === -1) {
+      formError.textContent = "This employee no longer exists. Close the form and refresh the list.";
+      return;
     }
+    employees[employeeIndex] = { id: editingEmployeeId, ...employee };
+  }
+
+  const wasSaved = saveEmployees();
+  employeeDialog.close();
+  refreshDashboard(wasSaved ? "Employee saved." : "Employee updated for this session only.");
 }
 
+function deleteEmployee(employeeId) {
+  const employee = employees.find((item) => item.id === employeeId);
+  if (!employee) {
+    showMessage("That employee could not be found. The list has been refreshed.", true);
+    refreshDashboard();
+    return;
+  }
+  if (!window.confirm(`Delete ${employee.name} from the directory?`)) return;
 
-// ==========================================
-// DELETE - Delete Employee
-// ==========================================
-
-async function deleteEmployeeAPI(id) {
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/${id}`,
-                {
-                    method: "DELETE"
-                }
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `HTTP Error: ${response.status}`
-            );
-        }
-
-
-        console.log(
-            "Employee deleted:",
-            id
-        );
-
-
-        return true;
-
-    } catch (error) {
-
-        console.error(
-            "DELETE Error:",
-            error
-        );
-
-
-        return false;
-    }
+  employees = employees.filter((item) => item.id !== employeeId);
+  const wasSaved = saveEmployees();
+  refreshDashboard(wasSaved ? `${employee.name} was deleted.` : `${employee.name} was deleted for this session only.`);
 }
 
-
-// ==========================================
-// Save Employee
-// ==========================================
-
-async function saveEmployee(event) {
-
-    event.preventDefault();
-
-
-    const name =
-        employeeName.value.trim();
-
-    const department =
-        employeeDepartment.value;
-
-    const salary =
-        Number(employeeSalary.value);
-
-
-    // ======================================
-    // Validation
-    // ======================================
-
-    if (!name) {
-
-        alert(
-            "Please enter employee name."
-        );
-
-        return;
-    }
-
-
-    if (!department) {
-
-        alert(
-            "Please select a department."
-        );
-
-        return;
-    }
-
-
-    if (
-        !Number.isFinite(salary) ||
-        salary < 0
-    ) {
-
-        alert(
-            "Please enter a valid salary."
-        );
-
-        return;
-    }
-
-
-    const employeeData = {
-
-        name:
-            name,
-
-        department:
-            department,
-
-        salary:
-            salary
-
-    };
-
-
-    // ======================================
-    // UPDATE Existing Employee
-    // ======================================
-
-    if (editingEmployeeId !== null) {
-
-        const updatedEmployee =
-            await updateEmployeeAPI(
-                editingEmployeeId,
-                employeeData
-            );
-
-
-        if (!updatedEmployee) {
-
-            alert(
-                "Failed to update employee."
-            );
-
-            return;
-        }
-
-    }
-
-
-    // ======================================
-    // CREATE New Employee
-    // ======================================
-
-    else {
-
-        const createdEmployee =
-            await createEmployee(
-                employeeData
-            );
-
-
-        if (!createdEmployee) {
-
-            alert(
-                "Failed to create employee."
-            );
-
-            return;
-        }
-
-    }
-
-
-    // ======================================
-    // Close Form
-    // ======================================
-
-    formModal.style.display =
-        "none";
-
-
-    employeeForm.reset();
-
-
-    editingEmployeeId =
-        null;
-
-
-    // ======================================
-    // Reload Data From Backend
-    // ======================================
-
-    await fetchEmployees();
-}
-
-
-// ==========================================
-// DELETE Employee
-// ==========================================
-
-async function deleteEmployee(id) {
-
-    const employee =
-        employees.find(
-            employee =>
-                employee.id === id
-        );
-
-
-    if (!employee) {
-
-        alert(
-            "Employee not found."
-        );
-
-        return;
-    }
-
-
-    const confirmed =
-        confirm(
-            `Delete ${employee.name}?`
-        );
-
-
-    if (!confirmed) {
-
-        return;
-    }
-
-
-    const deleted =
-        await deleteEmployeeAPI(id);
-
-
-    if (!deleted) {
-
-        alert(
-            "Failed to delete employee."
-        );
-
-        return;
-    }
-
-
-    await fetchEmployees();
-}
-
-
-// ==========================================
-// Close Details Modal
-// ==========================================
-
-closeModal.addEventListener(
-    "click",
-    () => {
-
-        employeeModal.style.display =
-            "none";
-
-    }
-);
-
-
-// ==========================================
-// Close Form Modal
-// ==========================================
-
-closeFormModal.addEventListener(
-    "click",
-    () => {
-
-        formModal.style.display =
-            "none";
-
-    }
-);
-
-
-// ==========================================
-// Close Details Modal
-// ==========================================
-
-employeeModal.addEventListener(
-    "click",
-    event => {
-
-        if (
-            event.target ===
-            employeeModal
-        ) {
-
-            employeeModal.style.display =
-                "none";
-
-        }
-
-    }
-);
-
-
-// ==========================================
-// Close Form Modal
-// ==========================================
-
-formModal.addEventListener(
-    "click",
-    event => {
-
-        if (
-            event.target ===
-            formModal
-        ) {
-
-            formModal.style.display =
-                "none";
-
-        }
-
-    }
-);
-
-
-// ==========================================
-// Event Listeners
-// ==========================================
-
-searchInput.addEventListener(
-    "input",
-    updateEmployees
-);
-
-
-departmentFilter.addEventListener(
-    "change",
-    updateEmployees
-);
-
-
-sortOption.addEventListener(
-    "change",
-    updateEmployees
-);
-
-
-addEmployeeButton.addEventListener(
-    "click",
-    openAddEmployeeForm
-);
-
-
-employeeForm.addEventListener(
-    "submit",
-    saveEmployee
-);
-
-
-// ==========================================
-// Start Application
-// ==========================================
-
-fetchEmployees();
+searchInput.addEventListener("input", renderEmployees);
+departmentFilter.addEventListener("change", renderEmployees);
+sortControl.addEventListener("change", renderEmployees);
+document.querySelector("#add-employee-button").addEventListener("click", openAddEmployeeForm);
+employeeForm.addEventListener("submit", saveEmployee);
+document.querySelectorAll("[data-close-form]").forEach((button) => {
+  button.addEventListener("click", () => employeeDialog.close());
+});
+document.querySelectorAll("[data-close-details]").forEach((button) => {
+  button.addEventListener("click", () => detailsDialog.close());
+});
+
+loadEmployees();
