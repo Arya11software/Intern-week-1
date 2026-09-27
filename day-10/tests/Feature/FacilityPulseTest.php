@@ -123,6 +123,25 @@ class FacilityPulseTest extends TestCase
         $this->assertSame(['Low cleanliness score', 'High waste level'], $assessment['risk_factors']);
     }
 
+    public function test_complaints_are_listed_and_can_be_created_from_the_web_form(): void
+    {
+        $facility = $this->createFacility();
+
+        $this->post('/complaints', [
+            'facility_id' => $facility->id,
+            'title' => 'Washroom cleanliness issue',
+            'description' => 'Soap dispensers were empty and the drain smelled bad.',
+            'category' => 'hygiene',
+            'severity' => 'high',
+            'status' => 'open',
+            'reported_at' => now()->toDateTimeString(),
+        ])->assertRedirect(route('complaints.index'));
+
+        $this->assertDatabaseHas('complaints', ['facility_id' => $facility->id, 'title' => 'Washroom cleanliness issue']);
+        $this->get('/complaints')->assertOk()->assertSee('Washroom cleanliness issue');
+        $this->get('/facilities/'.$facility->id)->assertOk()->assertSee('Washroom cleanliness issue');
+    }
+
     private function createFacility(): Facility
     {
         return Facility::create($this->facilityData());

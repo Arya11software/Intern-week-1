@@ -21,4 +21,9 @@ class Facility extends Model
     {
         return $this->hasMany(Inspection::class);
     }
+
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class);
+    }
 }

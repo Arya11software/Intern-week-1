@@ -22,6 +22,7 @@ class DashboardController extends Controller
             'averageCleanliness' => Inspection::avg('cleanliness_score'),
             'riskCounts' => $riskCounts,
             'recentInspections' => Inspection::with('facility')->latest('inspected_at')->limit(6)->get(),
+            'recentComplaints' => \App\Models\Complaint::with('facility')->latest('reported_at')->limit(4)->get(),
             'facilitiesNeedingAttention' => Facility::query()
                 ->withMax(['inspections as latest_high_risk_at' => fn ($query) => $query->where('risk_level', 'high')], 'inspected_at')
                 ->whereHas('inspections', fn ($query) => $query->where('risk_level', 'high'))

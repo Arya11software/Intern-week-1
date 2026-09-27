@@ -19,6 +19,7 @@
                 <a class="nav-link {{ request()->routeIs('dashboard') ? 'is-active' : '' }}" href="{{ route('dashboard') }}"><span class="nav-glyph">01</span> Overview</a>
                 <a class="nav-link {{ request()->routeIs('facilities.*') ? 'is-active' : '' }}" href="{{ route('facilities.index') }}"><span class="nav-glyph">02</span> Facilities</a>
                 <a class="nav-link {{ request()->routeIs('inspections.*') ? 'is-active' : '' }}" href="{{ route('inspections.index') }}"><span class="nav-glyph">03</span> Inspections</a>
+                <a class="nav-link {{ request()->routeIs('complaints.*') ? 'is-active' : '' }}" href="{{ route('complaints.index') }}"><span class="nav-glyph">04</span> Complaints</a>
             </nav>
             <div class="sidebar-bottom">
                 <span class="live-dot"></span>

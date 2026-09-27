@@ -10,7 +10,10 @@
             <h1>Keep every space<br><em>ready for people.</em></h1>
             <p class="heading-copy">A clear view of facility conditions, the latest checks, and where teams may need to act.</p>
         </div>
-        <a class="button button-dark" href="{{ route('inspections.create') }}"><span class="button-plus">+</span> Record inspection</a>
+        <div class="heading-actions">
+            <a class="button button-dark" href="{{ route('inspections.create') }}"><span class="button-plus">+</span> Record inspection</a>
+            <a class="button button-outline" href="{{ route('complaints.create') }}">Log complaint</a>
+        </div>
     </section>
 
     <section class="metric-grid" aria-label="Operations summary">
@@ -65,6 +68,26 @@
                         <td><span class="score-value">{{ $inspection->cleanliness_score }}</span><span class="score-max">/ 5</span></td>
                         <td><span class="badge badge-{{ $inspection->risk_level }}">{{ ucfirst($inspection->risk_level) }}</span></td>
                         <td><a class="row-action" href="{{ route('inspections.show', $inspection) }}" aria-label="View inspection">↗</a></td>
+                    </tr>
+                @endforeach</tbody>
+            </table></div>
+        @endif
+    </section>
+
+    <section class="panel table-panel">
+        <div class="panel-heading"><div><p class="eyebrow">CUSTOMER FEEDBACK</p><h2>Recent complaints</h2></div><a class="text-link" href="{{ route('complaints.index') }}">All complaints <span>↗</span></a></div>
+        @if ($recentComplaints->isEmpty())
+            <div class="empty-state"><span class="empty-stamp">02</span><h3>No complaints logged.</h3><p>When users raise issues, they will appear here with their current status.</p><a class="button button-dark" href="{{ route('complaints.create') }}">Log complaint <span>↗</span></a></div>
+        @else
+            <div class="table-scroll"><table>
+                <thead><tr><th>FACILITY</th><th>TITLE</th><th>SEVERITY</th><th>STATUS</th><th></th></tr></thead>
+                <tbody>@foreach ($recentComplaints as $complaint)
+                    <tr>
+                        <td><a class="table-primary" href="{{ route('facilities.show', $complaint->facility) }}">{{ $complaint->facility->name }}</a><span class="table-sub">{{ ucfirst($complaint->category) }}</span></td>
+                        <td>{{ $complaint->title }}</td>
+                        <td><span class="badge badge-{{ $complaint->severity == 'critical' ? 'high' : ($complaint->severity == 'high' ? 'moderate' : 'low') }}">{{ ucfirst($complaint->severity) }}</span></td>
+                        <td><span class="badge badge-{{ $complaint->status == 'closed' ? 'low' : ($complaint->status == 'investigating' ? 'moderate' : 'high') }}">{{ ucfirst($complaint->status) }}</span></td>
+                        <td><a class="row-action" href="{{ route('complaints.show', $complaint) }}" aria-label="View complaint">↗</a></td>
                     </tr>
                 @endforeach</tbody>
             </table></div>

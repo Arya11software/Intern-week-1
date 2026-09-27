@@ -45,7 +45,10 @@ class FacilityController extends Controller
 
     public function show(Facility $facility): View
     {
-        $facility->load(['inspections' => fn ($query) => $query->latest('inspected_at')->limit(12)]);
+        $facility->load([
+            'inspections' => fn ($query) => $query->latest('inspected_at')->limit(12),
+            'complaints' => fn ($query) => $query->latest('reported_at')->limit(8),
+        ]);
 
         return view('facilities.show', compact('facility'));
     }
